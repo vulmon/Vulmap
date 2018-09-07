@@ -7,3 +7,8 @@ Use below links to get detailed information about vulmap scripts:
 
 - [Vulmap Linux](https://github.com/ozelfatih/vulmap-linux) - Python script for Linux systems
 - [Vulmap Windows](https://github.com/yavuzatlas/vulmap-windows) - Powershell script for Windows systems
+
+![Screenshot from terminal](https://raw.githubusercontent.com/ozelfatih/vulmap/master/screenshot.png)
+
+![Screenshot from terminal](https://raw.githubusercontent.com/yavuzatlas/vulmap-windows/master/bir.jpg)
+
