@@ -3,9 +3,9 @@ Host-based local vulnerability scanner. Finds installed software on the host, as
 
 Vulmap Windows is part of [Vulmap Local Vulnerability Scanners Project](https://github.com/vulmon/Vulmap-Local-Vulnerability-Scanners)
 ## Screenshots
-![Screenshot from terminal](https://raw.githubusercontent.com/yavuzatlas/vulmap-windows/master/bir.jpg)
+![Screenshot from terminal](https://raw.githubusercontent.com/vulmon/Vulmap/master/Vulmap-Windows/bir.jpg)
 
-![Screenshot-2 from terminal](https://raw.githubusercontent.com/yavuzatlas/vulmap-windows/master/iki.jpg)
+![Screenshot-2 from terminal](https://raw.githubusercontent.com/vulmon/Vulmap/master/Vulmap-Windows/iki.jpg)
 
 ## Recommended Platform
 Compatible with PowerShell v3 and higher
