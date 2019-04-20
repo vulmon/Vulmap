@@ -4,9 +4,9 @@ Host-based vulnerability scanner. Find installed packages on the host, ask their
 Vulmap Linux is part of [Vulmap Local Vulnerability Scanners Project](https://github.com/vulmon/Vulmap-Local-Vulnerability-Scanners)
 
 ## Screenshots
-![Screenshot from terminal](https://raw.githubusercontent.com/ozelfatih/vulmap/master/screenshot.png)
+![Screenshot from terminal](https://raw.githubusercontent.com/vulmon/Vulmap-Local-Vulnerability-Scanners/master/Vulmap-Linux/screenshot.png)
 
-![Screenshot-2 from terminal](https://raw.githubusercontent.com/ozelfatih/vulmap/master/screenshot-all-download-exploit.png)
+![Screenshot-2 from terminal](https://raw.githubusercontent.com/vulmon/Vulmap-Local-Vulnerability-Scanners/master/Vulmap-Linux/screenshot-all-download-exploit.png)
 
 ## Recommended Platform and Python Version
 Vulmap currently only supports linux platforms and ![Python2](https://camo.githubusercontent.com/91573a399273230bbd7a6391aff545172fe49fb5/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f507974686f6e2d322d79656c6c6f772e737667)
@@ -16,12 +16,12 @@ Vulmap currently only supports linux platforms and ![Python2](https://camo.githu
 
 ## Installation
 ```
-git clone https://github.com/ozelfatih/vulmap.git
+git clone https://github.com/vulmon/Vulmap-Local-Vulnerability-Scanners.git
 ```
 
 Run in default mode
 ```
-python vulmap.py
+python vulmap-linux.py
 ```
 
 ## Usage
@@ -37,30 +37,30 @@ Short Form | Long Form      | Description
 ### Examples
 * To list all the basic options and switches use -h switch:
 ```
-python vulmap.py -h
+python vulmap-linux.py -h
 ```
 * Run in default mode:
 ```
-python vulmap.py
+python vulmap-linux.py
 ```
 * Enable the verbose mode:
 ```
-python vulmap.py -v
+python vulmap-linux.py -v
 ```
 * To download of all found exploits:
 ```
-python vulmap.py -a
+python vulmap-linux.py -a
 ```
 * To download a specific exploit:
 ```
-python vulmap.py -d <exploit_id>
+python vulmap-linux.py -d <exploit_id>
 
-python vulmap.py -d EDB20
-python vulmap.py -d EDB8310
+python vulmap-linux.py -d EDB20
+python vulmap-linux.py -d EDB8310
 ```
 
 ## Version
 Current version is 1.0
 
 ## License
-Vulmap is licensed under the GNU GPL license. Take a look at the [LICENSE](https://github.com/ozelfatih/vulmap/blob/master/LICENSE) for more information.
+Vulmap is licensed under the GNU GPL license. Take a look at the [LICENSE](https://github.com/vulmon/Vulmap-Local-Vulnerability-Scanners/blob/master/LICENSE) for more information.
