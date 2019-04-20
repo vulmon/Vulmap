@@ -1,7 +1,7 @@
 # Vulmap Windows
-Host-based local vulnerability scanner. Finds installed software on the host, asks their vulnerabilities to vulmon.com API and print vulnerabilities with available exploits. All found exploits can be downloaded by Vulmap.
+Host-based online local vulnerability scanner. Finds installed software on the host, asks their vulnerabilities to vulmon.com API and print vulnerabilities with available exploits. All found exploits can be downloaded by Vulmap.
 
-Vulmap Windows is part of [Vulmap Local Vulnerability Scanners Project](https://github.com/vulmon/Vulmap)
+Vulmap Windows is part of [Vulmap Online Local Vulnerability Scanners Project](https://github.com/vulmon/Vulmap)
 ## Screenshots
 ![Screenshot from terminal](https://raw.githubusercontent.com/vulmon/Vulmap/master/Vulmap-Windows/bir.jpg)
 
