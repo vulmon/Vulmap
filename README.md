@@ -4,7 +4,7 @@ Vulmap is an open source online local vulnerability scanner project. It consists
 
 Vulmap can be used to, scan vulnerabilities on localhost, see related exploits and download them. Scripts basically, scan localhost to gather installed software information and ask vulmon.com api if there are any vulnerabilies and exploits related with installed software. If vulnerabilities exist, vulmap give CVE ID, risk score, vulnerability's detail link, exploit id and exploit title. Exploits can be downloaded with vulmap also. 
 
-Use below links to get detailed information about vulmap scripts:
+Use below links to get detailed information about vulmap:
 
 - [Vulmap Linux](https://github.com/vulmon/Vulmap/tree/master/Vulmap-Linux) - Python script for Linux systems
 
