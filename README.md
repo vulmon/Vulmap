@@ -1,5 +1,4 @@
 # Vulmap Local Vulnerability Scanners
-Information about Vulmap Local Vulnerability Scanners project
 
 Vulmap is an open source local vulnerability scanner project. It consists of local scanning scripts for different operating systems. Currently there are two vulmap scripts available, for Linux and for Windows operating systems. These scripts can be used for defensive and offensive purposes. It is possible to make vulnerability assessments using these scripts. Also they can be used for privilege escalation by pentesters/red teamers. 
 
