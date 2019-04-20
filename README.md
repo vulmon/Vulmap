@@ -6,11 +6,11 @@ Vulmap can be used to, scan vulnerabilities on localhost, see related exploits a
 
 Use below links to get detailed information about vulmap scripts:
 
-- [Vulmap Linux](https://github.com/vulmon/Vulmap/tree/master/Vulmap-Linux) - Python code for Linux systems
+- [Vulmap Linux](https://github.com/vulmon/Vulmap/tree/master/Vulmap-Linux) - Python script for Linux systems
 
 ![Screenshot from terminal](https://raw.githubusercontent.com/vulmon/Vulmap/master/Vulmap-Linux/screenshot.png)
 
-- [Vulmap Windows](https://github.com/vulmon/Vulmap/tree/master/Vulmap-Windows) - Powershell code for Windows systems
+- [Vulmap Windows](https://github.com/vulmon/Vulmap/tree/master/Vulmap-Windows) - Powershell script for Windows systems
 
-![Screenshot from terminal](https://raw.githubusercontent.com/yavuzatlas/vulmap-windows/master/bir.jpg)
+![Screenshot from terminal](https://raw.githubusercontent.com/vulmon/Vulmap/master/Vulmap-Windows/bir.jpg)
 
