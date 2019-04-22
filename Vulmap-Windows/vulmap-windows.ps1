@@ -40,7 +40,7 @@ Scans the computer and downloads all available exploits
 
 .LINK
 https://github.com/vulmon
-https://github.com/yavuzatlas/vulmap-windows
+https://github.com/yavuzatlas
 https://vulmon.com
 #>
 
