@@ -20,5 +20,6 @@ Use below links to get detailed information about vulmap:
 
 ## To-Do:
 * Operating system level vulnerabilities will be detected at Windows
+* Other Linux package management systems will be supported
 * macOS script will be developed
 * Android and iOS scripts will be developed
