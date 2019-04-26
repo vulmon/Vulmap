@@ -1,8 +1,12 @@
 # Vulmap
 
-Vulmap is an open source online local vulnerability scanner project. It consists of online local vulnerability scanning programs for Windows and Linux operating systems. These scripts can be used for defensive and offensive purposes. It is possible to make vulnerability assessments using these scripts. Also they can be used for privilege escalation by pentesters/red teamers. 
+Vulmap is an open source online local vulnerability scanner project. It consists of online local vulnerability scanning programs for Windows and Linux operating systems. These scripts can be used for defensive and offensive purposes. It is possible to make vulnerability assessments using these scripts. Also they can be used for privilege escalation by pentesters/red teamers.
 
-Vulmap can be used to, scan vulnerabilities on localhost, see related exploits and download them. Scripts basically, scan localhost to gather installed software information and ask vulmon.com api if there are any vulnerabilies and exploits related with installed software. If vulnerabilities exist, vulmap give CVE ID, risk score, vulnerability's detail link, exploit id and exploit title. Exploits can be downloaded with vulmap also. 
+Vulmap can be used to, scan vulnerabilities on localhost, see related exploits and download them. Scripts basically, scan localhost to gather installed software information and ask vulmon.com api if there are any vulnerabilies and exploits related with installed software. If vulnerabilities exist, Vulmap give CVE ID, risk score, vulnerability's detail link, exploit id and exploit title. Exploits can be downloaded with Vulmap also.
+
+Main idea of Vulmap is getting real-time vulnerability data from Vulmon instead of relying of a local vulnerability database. Even the most recent vulnerabilies can be detected with this approach. Also its exploit download feature aids privilege escalation processes. 
+
+Since most Linux installations have Python, Vulmap-Linux is written with Python while Vulmap-Windows is written with PowerShell to make it easy to run it on most Windows versions.
 
 Use below links to get detailed information about vulmap:
 
@@ -14,3 +18,7 @@ Use below links to get detailed information about vulmap:
 
 ![Screenshot from terminal](https://raw.githubusercontent.com/vulmon/Vulmap/master/Vulmap-Windows/bir.jpg)
 
+## To-Do:
+* Operating system level vulnerabilities will be detected at Windows
+* macOS script will be developed
+* Android and iOS scripts will be developed
