@@ -25,5 +25,5 @@ Use below links to get detailed information about vulmap:
 * Android and iOS scripts will be developed
 
 ## Contributors
-[Yavuz Atlas](https://github.com/yavuzatlas)
-[Fatih Özel](https://github.com/ozelfatih)
+* [Yavuz Atlas](https://github.com/yavuzatlas)
+* [Fatih Özel](https://github.com/ozelfatih)
