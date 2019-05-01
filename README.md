@@ -23,3 +23,7 @@ Use below links to get detailed information about vulmap:
 * Other Linux package management systems will be supported
 * macOS script will be developed
 * Android and iOS scripts will be developed
+
+## Contributors
+[Yavuz Atlas](https://github.com/yavuzatlas)
+[Fatih Özel](https://github.com/ozelfatih)
