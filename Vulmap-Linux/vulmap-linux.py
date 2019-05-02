@@ -41,7 +41,7 @@ class ApiRequest:
 
 		try:
 			data = json.load(urllib.urlopen(self.url))
-		except Exception, e:
+		except Exception as e:
 			print e
 
 	def vulnerabilityCheck(self):
@@ -61,7 +61,7 @@ class ApiRequest:
 
 								print bcolors.FAIL + "[+] " + bcolors.ENDC + "Title: " + title
 								print bcolors.FAIL + "[!] Exploit ID: " + edb_id[1] + bcolors.ENDC
-					except Exception, e:
+					except Exception as e:
 						continue
 					print ""
 		else:
@@ -79,7 +79,7 @@ class ApiRequest:
 								print bcolors.FAIL + "	[!]" + bcolors.ENDC + " Exploit ID: " + edb_id[1] + " URL: " + str(data["results"][i]["exploits"][j]["url"]) + " (" + data["results"][i]["exploits"][j]["title"] +")"
 								#url = 'http://vulmon.com/downloadexploit?qid=' + edb_id[1] + "&dev=1"
 								#print bcolors.FAIL + "\t[!]" + bcolors.ENDC + " Click Exploit Download: " + url
-					except Exception, e:
+					except Exception as e:
 						continue
 				print ""
 			else:
@@ -158,7 +158,7 @@ def exploitDownload(exploit_ID):
 		print bcolors.FAIL + "[*] " + bcolors.ENDC + "Exploit Downloaded!"
 		print bcolors.FAIL + "[!] Make use of exploit file: Exploit_" + exploit_ID + bcolors.ENDC
 		print bcolors.OKGREEN + "[STATUS] EXPLOIT DOWNLOADED." + bcolors.ENDC
-	except Exception, e:
+	except Exception as e:
 		print e
 #==========================================================================
 # MAIN PROGRAM
