@@ -139,7 +139,7 @@ def linuxSystemInfo():
 
 def getProductList():
 	global productList
-	dpkg = "dpkg-query -W -f='${Package} ${Version}\n'"
+	dpkg = "rpm -qa --qf '%{n} %{version}\n'"
 	action = subprocess.Popen(dpkg, shell = True, stdout = subprocess.PIPE)
 	results = action.communicate()[0]
 	tempList = results.split("\n")
