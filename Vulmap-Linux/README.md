@@ -60,7 +60,7 @@ python vulmap-linux.py -d EDB8310
 ```
 
 ## Version
-Current version is 1.0
+Current version is 2.0
 
 ## License
 Vulmap is licensed under the GNU GPL license. Take a look at the [LICENSE](https://github.com/vulmon/Vulmap-Local-Vulnerability-Scanners/blob/master/LICENSE) for more information.
