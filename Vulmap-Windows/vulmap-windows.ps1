@@ -61,36 +61,38 @@ https://vulmon.com
         $json_request_data = $json_request_data + $product_list;
         $json_request_data = $json_request_data + '}';
 
-        $postParams = @{querydata = $json_request_data};
+        $postParams = @{querydata = $json_request_data };
         return (Invoke-WebRequest -Uri https://vulmon.com/scannerapi_vv211 -Method POST -Body $postParams).Content;
     }
     function Get-ProductList() {
-        $registry_paths = ("HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall");
+        $registry_paths = ("HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall");
    
         $objectArray = @();
     
         foreach ($registry_path in $registry_paths) {
-            $subkeys = Get-ChildItem -Path $registry_path;
+            
+            if ([bool](Get-ChildItem -Path $registry_path -ErrorAction SilentlyContinue)) {
+			
+                $subkeys = Get-ChildItem -Path $registry_path;
+	
+                ForEach ($key in $subkeys) {
+                    $DisplayName = $key.getValue('DisplayName');
     
-            ForEach ($key in $subkeys) {
-                $DisplayName = $key.getValue('DisplayName');
+                    if (!([string]::IsNullOrEmpty($DisplayName))) {
+                        $DisplayVersion = $key.GetValue('DisplayVersion');
     
-                if (!([string]::IsNullOrEmpty($DisplayName))) {
-                    $DisplayVersion = $key.GetValue('DisplayVersion');
+                        $Object = [pscustomobject]@{ 
+                            DisplayName     = $DisplayName.Trim();
+                            DisplayVersion  = $DisplayVersion;
+                            NameVersionPair = $DisplayName.Trim() + $DisplayVersion;
+                        };
     
-                    $Object = [pscustomobject]@{ 
-                        DisplayName     = $DisplayName.Trim();
-                        DisplayVersion  = $DisplayVersion;
-                        NameVersionPair = $DisplayName.Trim() + $DisplayVersion;
-                    };
+                        $Object.pstypenames.insert(0, 'System.Software.Inventory');
     
-                    $Object.pstypenames.insert(0, 'System.Software.Inventory');
-    
-                    $objectArray += $Object;
-                }
-    
-            }
-    
+                        $objectArray += $Object;
+                    }
+                }					
+            }			    
         }
     
         $objectArray | sort-object NameVersionPair -unique;  
@@ -104,12 +106,12 @@ https://vulmon.com
         $product_list = $product_list + ']';
         $response = (Send-Request -ProductList $product_list | ConvertFrom-Json);
 
-        $vuln_found=0;
+        $vuln_found = 0;
         foreach ($var2 in $response.results) {
             
             if ($OnlyExploitableVulns -Or $DownloadAllExploits) {
-                $var3 = $var2 | Select-Object -Property query_string -ExpandProperty vulnerabilities | where-object {$_.exploits -ne $null} | `
-                    Select-Object -Property @{N = 'Product'; E = {$_.query_string}}, @{N = 'CVE ID'; E = {$_.cveid}}, @{N = 'Risk Score'; E = {$_.cvssv2_basescore}}, @{N = 'Vulnerability Detail'; E = {$_.url}}, @{L = 'ExploitID'; E = {if ($null -ne $_.exploits) {"EDB" + ($_.exploits[0].url).Split("{=}")[2]}else { null }}}, @{L = 'Exploit Title'; E = {if ($null -ne $_.exploits) {$_.exploits[0].title}else { null }  }};
+                $var3 = $var2 | Select-Object -Property query_string -ExpandProperty vulnerabilities | where-object { $_.exploits -ne $null } | `
+                    Select-Object -Property @{N = 'Product'; E = { $_.query_string } }, @{N = 'CVE ID'; E = { $_.cveid } }, @{N = 'Risk Score'; E = { $_.cvssv2_basescore } }, @{N = 'Vulnerability Detail'; E = { $_.url } }, @{L = 'ExploitID'; E = { if ($null -ne $_.exploits) { "EDB" + ($_.exploits[0].url).Split("{=}")[2] }else { null } } }, @{L = 'Exploit Title'; E = { if ($null -ne $_.exploits) { $_.exploits[0].title }else { null } } };
 
                 $var3 | Format-Table -AutoSize;
 
@@ -122,7 +124,7 @@ https://vulmon.com
             }
             else {
                 $var3 = $var2 | Select-Object -Property query_string -ExpandProperty vulnerabilities | `
-                    Select-Object -Property @{N = 'Product'; E = {$_.query_string}}, @{N = 'CVE ID'; E = {$_.cveid}}, @{N = 'Risk Score'; E = {$_.cvssv2_basescore}}, @{N = 'Vulnerability Detail'; E = {$_.url}}, @{L = 'Exploit ID'; E = {if ($null -ne $_.exploits) {"EDB" + ($_.exploits[0].url).Split("{=}")[2]}else { null }}}, @{L = 'Exploit Title'; E = {if ($null -ne $_.exploits) {$_.exploits[0].title}else { null }  }};
+                    Select-Object -Property @{N = 'Product'; E = { $_.query_string } }, @{N = 'CVE ID'; E = { $_.cveid } }, @{N = 'Risk Score'; E = { $_.cvssv2_basescore } }, @{N = 'Vulnerability Detail'; E = { $_.url } }, @{L = 'Exploit ID'; E = { if ($null -ne $_.exploits) { "EDB" + ($_.exploits[0].url).Split("{=}")[2] }else { null } } }, @{L = 'Exploit Title'; E = { if ($null -ne $_.exploits) { $_.exploits[0].title }else { null } } };
                 $var3 | Format-Table -AutoSize;
             }
         }
@@ -130,10 +132,10 @@ https://vulmon.com
           
     }
     function Invoke-VulnerabilityScan() {
-        Write-Host 'Vulnerability scan started...';
+        Write-Host 'Vulmap vulnerability scanning started...';
         $var1 = Get-ProductList;
 
-        $vuln_found=1;
+        $vuln_found = 1;
         $count = 0;
         foreach ($element in $var1) {
             if ($count -eq 0) { $product_list = '['; }
@@ -153,7 +155,7 @@ https://vulmon.com
         }
         Out-Result($product_list);
 
-        if($vuln_found -eq 0){Write-Host 'No vulnerabilities found.';}
+        if ($vuln_found -eq 0) { Write-Host 'No vulnerabilities found.'; }
     }
 
     <#-----------------------------------------------------------[Execution]------------------------------------------------------------#>
