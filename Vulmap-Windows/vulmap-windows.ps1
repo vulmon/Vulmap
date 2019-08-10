@@ -98,8 +98,8 @@ https://vulmon.com
         $objectArray | sort-object NameVersionPair -unique;  
     }   
     function Get-Exploit($ExploitID) {  
-        $request1 = Invoke-WebRequest -Uri ('http://vulmon.com/downloadexploit?qid=' + $ExploitID) -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0";
-        Invoke-WebRequest -Uri ('http://vulmon.com/downloadexploit?qid=' + $ExploitID) -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0" -OutFile ( ($request1.Headers."Content-Disposition" -split "=")[1]);
+        $request1 = Invoke-WebRequest -Uri ('https://vulmon.com/downloadexploit?qid=' + $ExploitID) -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0";
+        Invoke-WebRequest -Uri ('https://vulmon.com/downloadexploit?qid=' + $ExploitID) -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0" -OutFile ( ($request1.Headers."Content-Disposition" -split "=")[1]);
     }
     function Out-Result($product_list) {
         $product_list = $product_list.Substring(0, $product_list.Length - 1);
