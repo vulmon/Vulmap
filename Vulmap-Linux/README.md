@@ -38,25 +38,31 @@ Short Form | Long Form      | Description
 * To list all the basic options and switches use -h switch:
 ```
 python vulmap-linux.py -h
+python3 vulmap-linux.py -h
 ```
 * Run in default mode:
 ```
 python vulmap-linux.py
+python3 vulmap-linux.py
 ```
 * Enable the verbose mode:
 ```
 python vulmap-linux.py -v
+python3 vulmap-linux.py -v
 ```
 * To download of all found exploits:
 ```
 python vulmap-linux.py -a
+python3 vulmap-linux.py -a
 ```
 * To download a specific exploit:
 ```
 python vulmap-linux.py -d <exploit_id>
+python3 vulmap-linux.py -d <exploit_id>
 
+e.g
 python vulmap-linux.py -d EDB20
-python vulmap-linux.py -d EDB8310
+python3 vulmap-linux.py -d EDB8310
 ```
 
 ## Version
