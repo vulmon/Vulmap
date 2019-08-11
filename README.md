@@ -6,7 +6,7 @@ Vulmap can be used to, scan vulnerabilities on localhost, see related exploits a
 
 **Main idea of Vulmap is getting real-time vulnerability data from Vulmon instead of relying of a local vulnerability database. Even the most recent vulnerabilies can be detected with this approach.** Also its exploit download feature aids privilege escalation processes. Pentesters and red teamers can download exploits from Exploit DB from command prompt. To use this feature only thing needed is id of exploits. 
 
-Since most Linux installations have Python, Vulmap Linux is developed with Python while Vulmap Windows is developed with PowerShell to make it easy to run it on most Windows versions. Vulmap Linux is compatible with Python 2.x and dpkg package management system. Vulmap Windows is compatible with PowerShell v3 and higher.
+Since most Linux installations have Python, Vulmap Linux is developed with Python while Vulmap Windows is developed with PowerShell to make it easy to run it on most Windows versions. Vulmap Linux is compatible with Python 2.x, 3.x and dpkg package management system. Vulmap Windows is compatible with PowerShell v3 and higher.
 
 Use below links to get detailed information about vulmap:
 
@@ -24,6 +24,6 @@ Use below links to get detailed information about vulmap:
 * macOS script will be developed
 * Android and iOS scripts will be developed
 
-## Contributors
+## Main Contributors
 * [Yavuz Atlas](https://github.com/yavuzatlas)
 * [Fatih Özel](https://github.com/ozelfatih)
