@@ -5,24 +5,30 @@
 #https://github.com/ozelfatih
 #https://vulmon.com
 
-
 #==========================================================================
 # LIBRARIES
 #==========================================================================
 from __future__ import print_function
 import subprocess
-import urllib2
 import urllib
 import json
 import argparse
 import platform
+import sys
+
+pV = sys.version_info[0]
+if pV == 2:
+	import urllib2
+else:
+	import requests
 
 #==========================================================================
 # GLOBAL VARIABLES
 #==========================================================================
 productList = []
+queryData = ""
 exploit_sum = 0
-__version__ = 2.1
+__version__ = 2.2
 
 #==========================================================================
 # FUNCTIONS
@@ -31,14 +37,12 @@ def args():
 	global args
 
 	description = "Host-based vulnerability scanner. Find installed packages on the host, ask their vulnerabilities to vulmon.com API and print vulnerabilities with available exploits. All found exploits can be downloaded by Vulmap."
-
 	parser = argparse.ArgumentParser('vulmap.py', description=description)
 	parser.add_argument('-v', '--verbose', action='store_true', default=False, help='Verbose mode', dest='verbose', required=False)
 	parser.add_argument('-a', '--all-download', action='store_true', default=False, help='Download all found exploits', dest='exploit', required=False)
 	parser.add_argument('-d', '--download', type=str, default=False, help='Download a specific exploit ./%(prog)s -d EDB16372', dest='exploit_ID', required=False)
 	parser.add_argument('--version', action='version', version='%(prog)s version ' + str(__version__))
 	args = parser.parse_args()
-	
 
 def sendRequest(queryData):
 	product_list = '"product_list": ' + queryData
@@ -56,11 +60,12 @@ def sendRequest(queryData):
 	body = 'querydata=' + json_request_data
 	headers = {'Content-Type': 'application/x-www-form-urlencoded'}
 
-	request = urllib2.Request(url, body, headers)
-
-	result = urllib2.urlopen(request, timeout=5)
-	response = json.loads(result.read())
-
+	if pV == 2:
+		request = urllib2.Request(url, body, headers)
+		result = urllib2.urlopen(request, timeout=5)
+		response = json.loads(result.read())
+	else:
+		response = (requests.post(url, data=body, headers=headers)).json()
 	return response
 
 def outResults(q):
@@ -75,7 +80,7 @@ def outResults(q):
 			if args.verbose:
 				print(bcolors.OKGREEN + "[*] " + bcolors.ENDC + "Vulnerability Found!")
 
-				print(bcolors.OKGREEN + "[>] " + bcolors.ENDC + "Product: " + response['results'][i]['query_string'])
+				print(bcolors.OKGREEN + "[>] " + bcolors.ENDC + "Product: " + productFilter(response['results'][i]['query_string']))
 
 				for j in range(0, response['results'][i]['total_hits']):
 					try:
@@ -95,14 +100,13 @@ def outResults(q):
 						continue
 					print(bcolors.OKGREEN + '[+] ' + bcolors.ENDC + 'CVEID: ' + response['results'][i]['vulnerabilities'][j]['cveid'] + '	Score: ' + str(response['results'][i]['vulnerabilities'][j]['cvssv2_basescore']) + '	URL: ' + response['results'][i]['vulnerabilities'][j]['url'])
 				print("\n")
-
 			elif args.exploit:
 				for j in range(0, response['results'][i]['total_hits']):
 					try:
 						if response['results'][i]['vulnerabilities'][j]['exploits']:
-
+							
 							print(bcolors.OKGREEN + "[*] " + bcolors.ENDC + "Exploit Found!")
-							print(bcolors.OKGREEN + "[>] " + bcolors.ENDC + "Product: " + response['results'][i]['query_string'])
+							print(bcolors.OKGREEN + "[>] " + bcolors.ENDC + "Product: " + productFilter(response['results'][i]['query_string']))
 
 							for z in range(0, len(response['results'][i]['vulnerabilities'][j]['exploits'])):
 
@@ -119,7 +123,7 @@ def outResults(q):
 			else:
 				print(bcolors.OKGREEN + "[*] " + bcolors.ENDC + "Vulnerability Found!")
 
-				print(bcolors.OKGREEN + "[>] " + bcolors.ENDC + "Product: " + response['results'][i]['query_string'])
+				print(bcolors.OKGREEN + "[>] " + bcolors.ENDC + "Product: " + productFilter(response['results'][i]['query_string']))
 
 				for j in range(0, response['results'][i]['total_hits']):
 					try:
@@ -139,60 +143,59 @@ def outResults(q):
 						continue
 					print(bcolors.OKGREEN + '[+] ' + bcolors.ENDC + 'CVEID: ' + response['results'][i]['vulnerabilities'][j]['cveid'] + '	Score: ' + str(response['results'][i]['vulnerabilities'][j]['cvssv2_basescore']) + '	URL: ' + response['results'][i]['vulnerabilities'][j]['url'])
 				print("\n")
-
 	else:
 		pass
 
 def getExploit(exploit_ID):
 	url = 'https://vulmon.com/downloadexploit?qid=' + exploit_ID
-	urllib.urlretrieve(url, ("Exploit_" + exploit_ID))
-
+	if pV == 2:
+		urllib.urlretrieve(url, ("Exploit_" + exploit_ID))
+	else:
+		urllib.request.urlretrieve(url, ("Exploit_" + exploit_ID))
 	if args.exploit_ID:
 		print(bcolors.OKBLUE + "[Info] " + bcolors.ENDC + "Exploit Mode. Exploit downloading...\n")
-
 		print(bcolors.OKGREEN + "[>] Filename: " + bcolors.ENDC + "Exploit_" + exploit_ID)
-		print(bcolors.OKGREEN + "[STATUS] Exploit Downloaded!" + bcolors.ENDC)
+		print(bcolors.HEADER + "[Status] " + bcolors.ENDC + "Exploit Downloaded!\n" + bcolors.ENDC)
 
 def getProductList():
 	global productList
-
 	dpkg = "dpkg-query -W -f='${Package} ${Version} ${Architecture}\n'"
-
 	action = subprocess.Popen(dpkg, shell = True, stdout = subprocess.PIPE)
 	results = action.communicate()[0]
-	tempList = results.split('\n')
-
+	if pV == 2:
+		tempList = str(results).split('\n')
+	else:
+		tempList = str(results).split('\\n')
 	for i in range(0,len(tempList)-1):
 		productList.append(tempList[i].split(" "))
 
 def vulnerabilityScan():
+	global queryData
 	print(bcolors.OKBLUE + "[Info] " + bcolors.ENDC + "Vulnerability scan started...")
-
 	if args.verbose:
 		print(bcolors.OKBLUE + "[Info] " + bcolors.ENDC + "Verbose Mode. Check vulnerabilities of installed packages...\n")
 	elif args.exploit:
 		print(bcolors.OKBLUE + "[Info] " + bcolors.ENDC + "All Exploit Mode. All exploit download mode starting...\n")
 	else:
 		print(bcolors.OKBLUE + "[Info] " + bcolors.ENDC + "Default Mode. Check vulnerabilities of installed packages...\n")
-
 	count = 0
-
 	for element in productList:
-
 		if count == 0:
 			queryData = '['
 		queryData += '{'
-               	queryData += '"product": "' + element[0] + '",'
-               	queryData += '"version": "' + element[1] + '",'
+		queryData += '"product": "' + element[0] + '",'
+		queryData += '"version": "' + element[1] + '",'
 		queryData += '"arc": "' + element[2] + '"'                	
 		queryData += '},'
-
 		count += 1
-
 		if count == 100:
 			count = 0
 			outResults(queryData)
 	outResults(queryData)
+
+def productFilter(productName):
+	productName = productName.replace('\\"', "")
+	return(productName)
 
 def banner():
 	print("|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||")
@@ -204,7 +207,7 @@ def banner():
 	print("  ██╔╝███████╗╚████╔╝ ╚██████╔╝███████╗██║ ╚═╝ ██║██║  ██║██║      ")
 	print("  ╚═╝ ╚══════╝ ╚═══╝   ╚═════╝ ╚══════╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝      ")
 	print("===================================================================")
-	print("\                       Vulmon Mapper v2.1                        /")
+	print("\                       Vulmon Mapper v2.2                        /")
 	print(" \                        www.vulmon.com                         / ")
 	print("  \=============================================================/\n")
 
@@ -216,7 +219,7 @@ class bcolors:
 	OKGREEN = '\033[92m'
 	FAIL = '\033[91m'
 	ENDC = '\033[0m'
-	BOLD = '\033[1m'
+	HEADER = '\033[95m'
 
 #==========================================================================
 # MAIN PROGRAM
@@ -224,10 +227,9 @@ class bcolors:
 if __name__ == '__main__':
 	banner()
 	args()
-
 	if args.exploit_ID:
 		getExploit(args.exploit_ID)
 	else:
 		getProductList()
 		vulnerabilityScan()
-		print(bcolors.OKBLUE + "[Info] " + bcolors.ENDC + "Total Exploits: " + str(exploit_sum) + "\n")
+		print(bcolors.HEADER + "[Status] " + bcolors.ENDC + "Total Exploits: " + str(exploit_sum) + "\n")
