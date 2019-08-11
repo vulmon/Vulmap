@@ -10,7 +10,7 @@ Vulmap Linux is part of [Vulmap Local Vulnerability Scanners Project](https://gi
 
 ## Recommended Platform and Python Version
 Vulmap currently only supports linux platforms and ![Python2](https://camo.githubusercontent.com/91573a399273230bbd7a6391aff545172fe49fb5/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f507974686f6e2d322d79656c6c6f772e737667) ![Python3](https://img.shields.io/badge/Python-3-blue)
-* The recommended version for Python 2 is 2.7.x
+* The recommended version for Python 2 is 2.7.x OR python3, python3.6.x, python3.7.x
 
 * Compatible with Linux distros uses **dpkg**
 
@@ -22,6 +22,7 @@ git clone https://github.com/vulmon/Vulmap-Local-Vulnerability-Scanners.git
 Run in default mode
 ```
 python vulmap-linux.py
+python3 vulmap-linux.py
 ```
 
 ## Usage
@@ -66,7 +67,7 @@ python3 vulmap-linux.py -d EDB8310
 ```
 
 ## Version
-Current version is 2.1
+Current version is 2.2
 
 ## License
 Vulmap is licensed under the GNU GPL license. Take a look at the [LICENSE](https://github.com/vulmon/Vulmap-Local-Vulnerability-Scanners/blob/master/LICENSE) for more information.
