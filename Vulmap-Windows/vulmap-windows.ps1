@@ -6,10 +6,10 @@ Local vulnerability scanner
 .DESCRIPTION
 Gets installed software information from the local host and asks to vulmon.com if vulnerabilities and exploits exists. 
 
-.PARAMETER DefaultMode
-Conducts a vulnerability scanning. Default mode.
+.PARAMETER Mode
+Mode. Conducts a vulnerability scanning[Default] or [CollectInventory]
 
-.PARAMETER OnlyExploitableVulns
+.PARAMETER OnlyInterestsVuln
 Conducts a vulnerability scanning and only shows vulnerabilities that have exploits.
 
 .PARAMETER DownloadExploit
@@ -17,6 +17,19 @@ Downloads given exploit.
 
 .PARAMETER DownloadAllExploits
 Scans the computer and downloads all available exploits.
+
+.PARAMETER ReadFromFile
+Uses inventory file rather than scanning local computer.
+
+.PARAMETER SaveInventoryFile
+Saves inventory file. Enabled automatically when Mode is 'CollectInventory'.
+
+.PARAMETER InventoryInFile
+Input JSON file name referred by SaveInventoryFile. Default is 'inventory.json'.
+
+.PARAMETER InventoryOutFile
+Output JSON file name referred by ReadFromFile. Default is 'inventory.json'.
+
 
 .EXAMPLE
 PS> Invoke-Vulmap
@@ -38,6 +51,38 @@ PS> Invoke-Vulmap -DownloadAllExploits
 
 Scans the computer and downloads all available exploits
 
+.EXAMPLE
+PS> Invoke-Vulmap -Mode CollectInventory
+
+Offline mode. Collects inventory but does not conduct a vulnerability scanning.
+Inventory will be saved as 'inventory.json' in default.
+
+.EXAMPLE
+PS> Invoke-Vulmap -Mode CollectInventory -InventoryOutFile pc0001.json
+
+Collects inventory and save it with given file name.
+
+.EXAMPLE
+PS> Invoke-Vulmap -SaveInventoryFile
+
+Conducts a vulnerability scanning with inventory file.
+
+.EXAMPLE
+PS> Invoke-Vulmap -SaveInventoryFile -InventoryOutFile pc0001.json
+
+Conducts a vulnerability scanning with inventory file with given file name.
+
+.EXAMPLE
+PS> Invoke-Vulmap -ReadFromFile
+
+Conducts a vulnerability scanning based on inventory from file.
+Inventory will be loaded from 'inventory.json' in default.
+
+.EXAMPLE
+PS> Invoke-Vulmap -ReadFromFile -InventoryInFile pc0001.json
+
+Conducts a vulnerability scanning based on inventory loaded from given file name.
+
 .LINK
 https://github.com/vulmon
 https://github.com/yavuzatlas
@@ -45,10 +90,14 @@ https://vulmon.com
 #>
 
     Param (
-        [switch] $DefaultMode,
+        [string] $Mode = "default",
         [switch] $OnlyExploitableVulns,
         [string] $DownloadExploit = "",
         [switch] $DownloadAllExploits,
+        [switch] $SaveInventoryFile,
+        [switch] $ReadFromFile,
+        [string] $InventoryOutFile = "inventory.json",
+        [string] $InventoryInFile = "inventory.json",
         [switch] $Help
     )
 
@@ -72,9 +121,9 @@ https://vulmon.com
         foreach ($registry_path in $registry_paths) {
             
             if ([bool](Get-ChildItem -Path $registry_path -ErrorAction SilentlyContinue)) {
-			
+            
                 $subkeys = Get-ChildItem -Path $registry_path;
-	
+    
                 ForEach ($key in $subkeys) {
                     $DisplayName = $key.getValue('DisplayName');
     
@@ -91,55 +140,47 @@ https://vulmon.com
     
                         $objectArray += $Object;
                     }
-                }					
-            }			    
+                }                   
+            }               
         }
-    
-        $objectArray | sort-object NameVersionPair -unique;  
+
+        $objectArray | sort-object NameVersionPair -unique;
     }   
     function Get-Exploit($ExploitID) {  
         $request1 = Invoke-WebRequest -Uri ('https://vulmon.com/downloadexploit?qid=' + $ExploitID) -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0";
         Invoke-WebRequest -Uri ('https://vulmon.com/downloadexploit?qid=' + $ExploitID) -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0" -OutFile ( ($request1.Headers."Content-Disposition" -split "=")[1].substring(1));
     }
-    function Out-Result($product_list) {
-        $product_list = $product_list.Substring(0, $product_list.Length - 1);
-        $product_list = $product_list + ']';
+    function Get-Vulmon($product_list) {
         $response = (Send-Request -ProductList $product_list | ConvertFrom-Json);
-
-        $vuln_found = 0;
-        foreach ($var2 in $response.results) {
+        $interests = @();
+        foreach ($vuln in $response.results) {
             
-            if ($OnlyExploitableVulns -Or $DownloadAllExploits) {
-                $var3 = $var2 | Select-Object -Property query_string -ExpandProperty vulnerabilities | where-object { $_.exploits -ne $null } | `
+            if ($OnlyInterestsVuln -Or $DownloadAllExploits) {
+                $interests += $vuln | Select-Object -Property query_string -ExpandProperty vulnerabilities | where-object { $_.exploits -ne $null } | `
                     Select-Object -Property @{N = 'Product'; E = { $_.query_string } }, @{N = 'CVE ID'; E = { $_.cveid } }, @{N = 'Risk Score'; E = { $_.cvssv2_basescore } }, @{N = 'Vulnerability Detail'; E = { $_.url } }, @{L = 'ExploitID'; E = { if ($null -ne $_.exploits) { "EDB" + ($_.exploits[0].url).Split("{=}")[2] }else { null } } }, @{L = 'Exploit Title'; E = { if ($null -ne $_.exploits) { $_.exploits[0].title }else { null } } };
 
-                $var3 | Format-Table -AutoSize;
-
                 if ($DownloadAllExploits) {    
-                    foreach ($var4 in $var3) {
-                        $exploit_id = $var4.ExploitID;
+                    foreach ($exp in $interests) {
+                        $exploit_id = $exp.ExploitID;
                         Get-Exploit($exploit_id);                     
                     }
                 }
             }
             else {
-                $var3 = $var2 | Select-Object -Property query_string -ExpandProperty vulnerabilities | `
+                $interests += $vuln | Select-Object -Property query_string -ExpandProperty vulnerabilities | `
                     Select-Object -Property @{N = 'Product'; E = { $_.query_string } }, @{N = 'CVE ID'; E = { $_.cveid } }, @{N = 'Risk Score'; E = { $_.cvssv2_basescore } }, @{N = 'Vulnerability Detail'; E = { $_.url } }, @{L = 'Exploit ID'; E = { if ($null -ne $_.exploits) { "EDB" + ($_.exploits[0].url).Split("{=}")[2] }else { null } } }, @{L = 'Exploit Title'; E = { if ($null -ne $_.exploits) { $_.exploits[0].title }else { null } } };
-                $var3 | Format-Table -AutoSize;
             }
         }
-
-          
+        return $interests;
     }
     function Invoke-VulnerabilityScan() {
-        Write-Host 'Vulmap vulnerability scanning started...';
-        $var1 = Get-ProductList;
+        Write-Host 'Vulnerability scanning started.';
+        $inventory = ConvertFrom-Json($inventory_json);
 
-        $vuln_found = 1;
+        $vuln_list = @();
         $count = 0;
-        foreach ($element in $var1) {
-            if ($count -eq 0) { $product_list = '['; }
-                   
+        foreach ($element in $inventory) {
+            # Build JSON from inventory
             if ($element.DisplayName) {
                 $product_list = $product_list + '{';
                 $product_list = $product_list + '"product": "' + $element.DisplayName + '",';
@@ -148,24 +189,62 @@ https://vulmon.com
             }
                    
             $count++;
-            if ($count -eq 100) {
-                $count = 0;
-                Out-Result($product_list);           
+            if (($count % 100) -eq 0) {
+                $product_list = $product_list.Substring(0, $product_list.Length - 1);
+                $http_param = '[' + $product_list + ']';
+                $http_response = Get-Vulmon($http_param);
+                $vuln_list += $http_response;
+                $product_list = "";
             }
         }
-        Out-Result($product_list);
+        $product_list = $product_list.Substring(0, $product_list.Length - 1);
+        $http_param = '[' + $product_list + ']';
+        $http_response = Get-Vulmon($http_param);
+        $vuln_list += $http_response;
+        Write-Host "Checked $count items.";
 
-        if ($vuln_found -eq 0) { Write-Host 'No vulnerabilities found.'; }
+        if ($vuln_list.Length -eq 0) {
+            Write-Host 'No vulnerabilities found.';
+        } else {
+            $vuln_count = $vuln_list.Length;
+            Write-Host "$vuln_count vulnerabilities found.";
+            $vuln_list | Format-Table -AutoSize;
+        }
     }
+    function Get-Inventory{
+        if ($ReadFromFile) {
+            # read from file
+            Write-Host "Reading inventory from $InventoryInFile ...";
+            $inventory_json = Get-Content -Encoding UTF8 -Path $InventoryInFile | Out-String;
+        } else {
+            Write-Host "Collecting inventory ...";
+            $inventory = Get-ProductList;
+            $inventory_json = ConvertTo-JSON $inventory;
+        }
+        Write-Host 'Inventory collected.';
+        return $inventory_json;
 
+    }
     <#-----------------------------------------------------------[Execution]------------------------------------------------------------#>
+    Write-Host 'Vulmap started.';
     if (!([string]::IsNullOrEmpty($DownloadExploit))) {
         "Exploit Download...";
         Get-Exploit($DownloadExploit);
     }
     else {
-        invoke-VulnerabilityScan;
+        $inventory_json = Get-Inventory;
+        # Save Inventory to File
+        if (($SaveInventoryFile) -Or ($Mode -eq "CollectInventory")) {
+            Write-Host "Saving inventory to $InventoryOutFile ... ";
+            $inventory_json | Out-File -Encoding UTF8 -FilePath $InventoryOutFile;
+            }
+
+        if (!($Mode -eq "CollectInventory")){
+           # Mode 'Default'
+           invoke-VulnerabilityScan;
+         }
     }
+    Write-Host 'done.';
 }
 
 Invoke-Vulmap;
