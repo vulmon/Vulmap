@@ -1,7 +1,7 @@
 function Invoke-Vulmap {
     <#
 .SYNOPSIS
-Local vulnerability scanner
+Online Local vulnerability Scanner
 
 .DESCRIPTION
 Gets installed software information from the local host and asks to vulmon.com if vulnerabilities and exploits exists. 
@@ -9,7 +9,7 @@ Gets installed software information from the local host and asks to vulmon.com i
 .PARAMETER Mode
 Mode. Conducts a vulnerability scanning[Default] or [CollectInventory]
 
-.PARAMETER OnlyInterestsVuln
+.PARAMETER OnlyExploitableVulns
 Conducts a vulnerability scanning and only shows vulnerabilities that have exploits.
 
 .PARAMETER DownloadExploit
@@ -19,10 +19,10 @@ Downloads given exploit.
 Scans the computer and downloads all available exploits.
 
 .PARAMETER ReadFromFile
-Uses inventory file rather than scanning local computer.
+Uses software inventory file rather than scanning local computer.
 
 .PARAMETER SaveInventoryFile
-Saves inventory file. Enabled automatically when Mode is 'CollectInventory'.
+Saves software inventory file. Enabled automatically when Mode is 'CollectInventory'.
 
 .PARAMETER InventoryInFile
 Input JSON file name referred by SaveInventoryFile. Default is 'inventory.json'.
@@ -39,49 +39,50 @@ Default mode. Conducts a vulnerability scanning.
 .EXAMPLE
 PS> Invoke-Vulmap -OnlyExploitableVulns
 
-Conducts a vulnerability scanning and only shows vulnerabilities that have exploits
+Conducts a vulnerability scanning and only shows vulnerabilities that have exploits.
 
 .EXAMPLE
 PS> Invoke-Vulmap -DownloadExploit EDB9386
 
-Downloads given exploit
+Downloads given exploit.
 
 .EXAMPLE
 PS> Invoke-Vulmap -DownloadAllExploits
 
-Scans the computer and downloads all available exploits
+Scans the computer and downloads all available exploits.
 
 .EXAMPLE
 PS> Invoke-Vulmap -Mode CollectInventory
 
-Offline mode. Collects inventory but does not conduct a vulnerability scanning.
-Inventory will be saved as 'inventory.json' in default.
+Collects software inventory but does not conduct a vulnerability scanning.
+Software inventory will be saved as 'inventory.json' in default.
 
 .EXAMPLE
 PS> Invoke-Vulmap -Mode CollectInventory -InventoryOutFile pc0001.json
 
-Collects inventory and save it with given file name.
+Collects software inventory and save it with given file name.
+Does not conduct a vulnerability scanning.
 
 .EXAMPLE
 PS> Invoke-Vulmap -SaveInventoryFile
 
-Conducts a vulnerability scanning with inventory file.
+Conducts a vulnerability scanning and saves software inventory to inventory.json file.
 
 .EXAMPLE
 PS> Invoke-Vulmap -SaveInventoryFile -InventoryOutFile pc0001.json
 
-Conducts a vulnerability scanning with inventory file with given file name.
+Conducts a vulnerability scanning and saves software inventory to given file name.
 
 .EXAMPLE
 PS> Invoke-Vulmap -ReadFromFile
 
-Conducts a vulnerability scanning based on inventory from file.
-Inventory will be loaded from 'inventory.json' in default.
+Conducts a vulnerability scanning based on software inventory from file.
+Software inventory will be loaded from 'inventory.json' in default.
 
 .EXAMPLE
 PS> Invoke-Vulmap -ReadFromFile -InventoryInFile pc0001.json
 
-Conducts a vulnerability scanning based on inventory loaded from given file name.
+Conducts a vulnerability scanning based on software inventory file loaded from given file name.
 
 .LINK
 https://github.com/vulmon
@@ -155,7 +156,7 @@ https://vulmon.com
         $interests = @();
         foreach ($vuln in $response.results) {
             
-            if ($OnlyInterestsVuln -Or $DownloadAllExploits) {
+            if ($OnlyExploitableVulns -Or $DownloadAllExploits) {
                 $interests += $vuln | Select-Object -Property query_string -ExpandProperty vulnerabilities | where-object { $_.exploits -ne $null } | `
                     Select-Object -Property @{N = 'Product'; E = { $_.query_string } }, @{N = 'CVE ID'; E = { $_.cveid } }, @{N = 'Risk Score'; E = { $_.cvssv2_basescore } }, @{N = 'Vulnerability Detail'; E = { $_.url } }, @{L = 'ExploitID'; E = { if ($null -ne $_.exploits) { "EDB" + ($_.exploits[0].url).Split("{=}")[2] }else { null } } }, @{L = 'Exploit Title'; E = { if ($null -ne $_.exploits) { $_.exploits[0].title }else { null } } };
 
@@ -174,7 +175,7 @@ https://vulmon.com
         return $interests;
     }
     function Invoke-VulnerabilityScan() {
-        Write-Host 'Vulnerability scanning started.';
+        Write-Host 'Vulnerability scanning started...';
         $inventory = ConvertFrom-Json($inventory_json);
 
         $vuln_list = @();
@@ -201,41 +202,41 @@ https://vulmon.com
         $http_param = '[' + $product_list + ']';
         $http_response = Get-Vulmon($http_param);
         $vuln_list += $http_response;
-        Write-Host "Checked $count items.";
+        Write-Host "Checked $count items";
 
         if ($vuln_list.Length -eq 0) {
-            Write-Host 'No vulnerabilities found.';
+            Write-Host 'No vulnerabilities found';
         } else {
             $vuln_count = $vuln_list.Length;
-            Write-Host "$vuln_count vulnerabilities found.";
+            Write-Host "$vuln_count vulnerabilities found!";
             $vuln_list | Format-Table -AutoSize;
         }
     }
     function Get-Inventory{
         if ($ReadFromFile) {
             # read from file
-            Write-Host "Reading inventory from $InventoryInFile ...";
+            Write-Host "Reading software inventory from $InventoryInFile...";
             $inventory_json = Get-Content -Encoding UTF8 -Path $InventoryInFile | Out-String;
         } else {
-            Write-Host "Collecting inventory ...";
+            Write-Host "Collecting software inventory...";
             $inventory = Get-ProductList;
             $inventory_json = ConvertTo-JSON $inventory;
         }
-        Write-Host 'Inventory collected.';
+        Write-Host 'Software inventory collected';
         return $inventory_json;
 
     }
     <#-----------------------------------------------------------[Execution]------------------------------------------------------------#>
-    Write-Host 'Vulmap started.';
+    Write-Host 'Vulmap started...';
     if (!([string]::IsNullOrEmpty($DownloadExploit))) {
-        "Exploit Download...";
+        "Downloading exploit...";
         Get-Exploit($DownloadExploit);
     }
     else {
         $inventory_json = Get-Inventory;
         # Save Inventory to File
         if (($SaveInventoryFile) -Or ($Mode -eq "CollectInventory")) {
-            Write-Host "Saving inventory to $InventoryOutFile ... ";
+            Write-Host "Saving software inventory to $InventoryOutFile... ";
             $inventory_json | Out-File -Encoding UTF8 -FilePath $InventoryOutFile;
             }
 
@@ -244,7 +245,7 @@ https://vulmon.com
            invoke-VulnerabilityScan;
          }
     }
-    Write-Host 'done.';
+    Write-Host 'Done.';
 }
 
 Invoke-Vulmap;
