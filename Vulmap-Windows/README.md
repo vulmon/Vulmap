@@ -10,6 +10,18 @@ Vulmap Windows is part of [Vulmap Online Local Vulnerability Scanners Project](h
 
 ## Usage
 
+Recommended usage is pasting the code at https://github.com/vulmon/Vulmap/blob/master/Vulmap-Windows/vulmap-windows.ps1 or the command below to powershell terminal:
+
+```
+iex(New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/vulmon/Vulmap/master/Vulmap-Windows/vulmap-windows.ps1')
+```
+
+If you don't have access to powershell but CMD, the command below can be used on CMD:
+
+```
+powershell -nop -c "iex(New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/vulmon/Vulmap/master/Vulmap-Windows/vulmap-windows.ps1')"
+```
+
 Parameter                     | Description
 ------------------------------| -------------
 -OnlyExploitableVulns         | Conducts a vulnerability scanning and only shows vulnerabilities that have exploits.
