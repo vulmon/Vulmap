@@ -10,13 +10,13 @@ Since most Linux installations have Python, Vulmap Linux is developed with Pytho
 
 Use below links to get detailed information about vulmap:
 
-- [Vulmap Linux](https://github.com/vulmon/Vulmap/tree/master/Vulmap-Linux) - Python script for Linux systems
-
-![Screenshot from terminal](https://raw.githubusercontent.com/vulmon/Vulmap/master/Vulmap-Linux/screenshot.png)
-
 - [Vulmap Windows](https://github.com/vulmon/Vulmap/tree/master/Vulmap-Windows) - Powershell script for Windows systems
 
 [![usage gif](https://raw.githubusercontent.com/vulmon/Vulmap/master/Vulmap-Windows/uc.gif)](https://www.youtube.com/watch?v=y39w9WYYnmI)
+
+- [Vulmap Linux](https://github.com/vulmon/Vulmap/tree/master/Vulmap-Linux) - Python script for Linux systems
+
+![Screenshot from terminal](https://raw.githubusercontent.com/vulmon/Vulmap/master/Vulmap-Linux/screenshot.png)
 
 ## To-Do:
 * Operating system level vulnerabilities will be detected at Windows
