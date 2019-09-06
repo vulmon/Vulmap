@@ -16,7 +16,7 @@ Use below links to get detailed information about vulmap:
 
 - [Vulmap Windows](https://github.com/vulmon/Vulmap/tree/master/Vulmap-Windows) - Powershell script for Windows systems
 
-![Screenshot from terminal](https://raw.githubusercontent.com/vulmon/Vulmap/master/Vulmap-Windows/bir.jpg)
+[![usage gif](https://raw.githubusercontent.com/vulmon/Vulmap/master/Vulmap-Windows/uc.gif)](https://www.youtube.com/watch?v=y39w9WYYnmI)
 
 ## To-Do:
 * Operating system level vulnerabilities will be detected at Windows
