@@ -30,6 +30,8 @@ Input JSON file name referred by SaveInventoryFile. Default is 'inventory.json'.
 .PARAMETER InventoryOutFile
 Output JSON file name referred by ReadFromFile. Default is 'inventory.json'.
 
+.PARAMETER Proxy
+Defines an HTTP proxy. (-Proxy http://localhost:8080)
 
 .EXAMPLE
 PS> Invoke-Vulmap
@@ -84,9 +86,13 @@ PS> Invoke-Vulmap -ReadFromFile -InventoryInFile pc0001.json
 
 Conducts a vulnerability scanning based on software inventory file loaded from given file name.
 
+.EXAMPLE
+PS> Invoke-Vulmap -Proxy http://127.0.0.1:8080
+
+Conducts a vulnerability scanning through an HTTP proxy.
+
 .LINK
 https://github.com/vulmon
-https://github.com/yavuzatlas
 https://vulmon.com
 #>
 
@@ -99,6 +105,7 @@ https://vulmon.com
         [switch] $ReadFromFile,
         [string] $InventoryOutFile = "inventory.json",
         [string] $InventoryInFile = "inventory.json",
+        [string] $Proxy,
         [switch] $Help
     )
 
@@ -112,7 +119,14 @@ https://vulmon.com
         $json_request_data = $json_request_data + '}';
 
         $postParams = @{querydata = $json_request_data };
-        return (Invoke-WebRequest -Uri https://vulmon.com/scannerapi_vv211 -Method POST -Body $postParams).Content;
+
+        if (![string]::IsNullOrEmpty($Proxy))
+        {
+            return (Invoke-WebRequest -Uri https://vulmon.com/scannerapi_vv211 -Method POST -Body $postParams -Proxy $Proxy).Content;
+        }
+        else {
+            return (Invoke-WebRequest -Uri https://vulmon.com/scannerapi_vv211 -Method POST -Body $postParams).Content;
+        }
     }
     function Get-ProductList() {
         $registry_paths = ("HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall");
