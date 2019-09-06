@@ -7,18 +7,19 @@ Vulmap Windows is part of [Vulmap Online Local Vulnerability Scanners Project](h
 
 ![Screenshot-2 from terminal](https://raw.githubusercontent.com/vulmon/Vulmap/master/Vulmap-Windows/iki.jpg)
 
-## Recommended Platform
-Compatible with PowerShell v3 and higher
-
 
 ## Usage
 
 Parameter                     | Description
 ------------------------------| -------------
--DefaultMode                  | Conducts a vulnerability scanning. Default mode.
 -OnlyExploitableVulns         | Conducts a vulnerability scanning and only shows vulnerabilities that have exploits.
 -DownloadExploit <exploit_id> | Downloads given exploit.
 -DownloadAllExploits          | Scans the computer and downloads all available exploits.
+-ReadFromFile                 | Uses software inventory file rather than scanning local computer.
+-SaveInventoryFile            | Saves software inventory file. Enabled automatically when Mode is 'CollectInventory'.
+-InventoryInFile              | Input JSON file name referred by SaveInventoryFile. Default is 'inventory.json'.
+-InventoryOutFile             | Output JSON file name referred by ReadFromFile. Default is 'inventory.json'.
+-Proxy                        | Defines an HTTP proxy. (-Proxy http://localhost:8080)
 
 
 ### Examples
@@ -43,6 +44,41 @@ PS> Invoke-Vulmap -DownloadExploit EDB9386
 PS> Invoke-Vulmap -DownloadAllExploits
 ```
 
+* Collects software inventory but does not conduct a vulnerability scanning. Software inventory will be saved as 'inventory.json' in default:
+```
+PS> Invoke-Vulmap -Mode CollectInventory
+```
+
+* Collects software inventory and save it with given file name. Does not conduct a vulnerability scanning:
+```
+PS> Invoke-Vulmap -Mode CollectInventory -InventoryOutFile pc0001.json
+```
+
+* Conducts a vulnerability scanning and saves software inventory to inventory.json file:
+```
+PS> Invoke-Vulmap -SaveInventoryFile
+```
+
+* Conducts a vulnerability scanning and saves software inventory to given file name:
+```
+PS> Invoke-Vulmap -SaveInventoryFile -InventoryOutFile pc0001.json
+```
+
+* Conducts a vulnerability scanning based on software inventory from file. Software inventory will be loaded from 'inventory.json' in default:
+```
+PS> Invoke-Vulmap -ReadFromFile
+```
+
+* Conducts a vulnerability scanning based on software inventory file loaded from given file name:
+```
+PS> Invoke-Vulmap -ReadFromFile -InventoryInFile pc0001.json
+```
+
+* Conducts a vulnerability scanning through an HTTP proxy:
+```
+PS> Invoke-Vulmap -Proxy http://127.0.0.1:8080
+```
 
 
-
+## Recommended Platform
+Compatible with PowerShell v3 and higher
