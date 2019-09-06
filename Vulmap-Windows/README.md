@@ -22,6 +22,8 @@ If you don't have access to powershell but CMD, the command below can be used on
 powershell -nop -c "iex(New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/vulmon/Vulmap/master/Vulmap-Windows/vulmap-windows.ps1')"
 ```
 
+![usage gif](https://raw.githubusercontent.com/vulmon/Vulmap/master/Vulmap-Windows/uc.gif)
+
 Parameter                     | Description
 ------------------------------| -------------
 -OnlyExploitableVulns         | Conducts a vulnerability scanning and only shows vulnerabilities that have exploits.
