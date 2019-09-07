@@ -31,7 +31,7 @@ Input JSON file name referred by SaveInventoryFile. Default is 'inventory.json'.
 Output JSON file name referred by ReadFromFile. Default is 'inventory.json'.
 
 .PARAMETER Proxy
-Defines an HTTP proxy. (-Proxy http://localhost:8080)
+Specifies an HTTP proxy server. Enter the URI of a network proxy server. (-Proxy http://localhost:8080)
 
 .EXAMPLE
 PS> Invoke-Vulmap
@@ -89,7 +89,7 @@ Conducts a vulnerability scanning based on software inventory file loaded from g
 .EXAMPLE
 PS> Invoke-Vulmap -Proxy http://127.0.0.1:8080
 
-Conducts a vulnerability scanning through an HTTP proxy.
+Conducts a vulnerability scanning through an HTTP proxy server.
 
 .LINK
 https://github.com/vulmon
@@ -162,8 +162,16 @@ https://vulmon.com
         $objectArray | sort-object NameVersionPair -unique;
     }   
     function Get-Exploit($ExploitID) {  
-        $request1 = Invoke-WebRequest -Uri ('https://vulmon.com/downloadexploit?qid=' + $ExploitID) -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0";
-        Invoke-WebRequest -Uri ('https://vulmon.com/downloadexploit?qid=' + $ExploitID) -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0" -OutFile ( ($request1.Headers."Content-Disposition" -split "=")[1].substring(1));
+	    if (![string]::IsNullOrEmpty($Proxy))
+        {
+			$request1 = Invoke-WebRequest -Uri ('https://vulmon.com/downloadexploit?qid=' + $ExploitID) -Proxy $Proxy -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0";
+			Invoke-WebRequest -Uri ('https://vulmon.com/downloadexploit?qid=' + $ExploitID) -Proxy $Proxy -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0" -OutFile ( ($request1.Headers."Content-Disposition" -split "=")[1].substring(1));
+		}
+		else
+		{
+			$request1 = Invoke-WebRequest -Uri ('https://vulmon.com/downloadexploit?qid=' + $ExploitID) -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0";
+			Invoke-WebRequest -Uri ('https://vulmon.com/downloadexploit?qid=' + $ExploitID) -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0" -OutFile ( ($request1.Headers."Content-Disposition" -split "=")[1].substring(1));
+		}
     }
     function Get-Vulmon($product_list) {
         $response = (Send-Request -ProductList $product_list | ConvertFrom-Json);
