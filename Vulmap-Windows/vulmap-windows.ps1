@@ -18,7 +18,7 @@ Downloads given exploit.
 .PARAMETER DownloadAllExploits
 Scans the computer and downloads all available exploits.
 
-.PARAMETER ReadFromFile
+.PARAMETER ReadInventoryFile
 Uses software inventory file rather than scanning local computer.
 
 .PARAMETER SaveInventoryFile
@@ -28,7 +28,7 @@ Saves software inventory file. Enabled automatically when Mode is 'CollectInvent
 Input JSON file name referred by SaveInventoryFile. Default is 'inventory.json'.
 
 .PARAMETER InventoryOutFile
-Output JSON file name referred by ReadFromFile. Default is 'inventory.json'.
+Output JSON file name referred by ReadInventoryFile. Default is 'inventory.json'.
 
 .PARAMETER Proxy
 Specifies an HTTP proxy server. Enter the URI of a network proxy server. (-Proxy http://localhost:8080)
@@ -76,13 +76,13 @@ PS> Invoke-Vulmap -SaveInventoryFile -InventoryOutFile pc0001.json
 Conducts a vulnerability scanning and saves software inventory to given file name.
 
 .EXAMPLE
-PS> Invoke-Vulmap -ReadFromFile
+PS> Invoke-Vulmap -ReadInventoryFile
 
 Conducts a vulnerability scanning based on software inventory from file.
 Software inventory will be loaded from 'inventory.json' in default.
 
 .EXAMPLE
-PS> Invoke-Vulmap -ReadFromFile -InventoryInFile pc0001.json
+PS> Invoke-Vulmap -ReadInventoryFile -InventoryInFile pc0001.json
 
 Conducts a vulnerability scanning based on software inventory file loaded from given file name.
 
@@ -102,7 +102,7 @@ https://vulmon.com
         [string] $DownloadExploit = "",
         [switch] $DownloadAllExploits,
         [switch] $SaveInventoryFile,
-        [switch] $ReadFromFile,
+        [switch] $ReadInventoryFile,
         [string] $InventoryOutFile = "inventory.json",
         [string] $InventoryInFile = "inventory.json",
         [string] $Proxy,
@@ -235,7 +235,7 @@ https://vulmon.com
         }
     }
     function Get-Inventory{
-        if ($ReadFromFile) {
+        if ($ReadInventoryFile) {
             # read from file
             Write-Host "Reading software inventory from $InventoryInFile...";
             $inventory_json = Get-Content -Encoding UTF8 -Path $InventoryInFile | Out-String;
