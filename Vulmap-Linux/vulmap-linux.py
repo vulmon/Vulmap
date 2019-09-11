@@ -53,7 +53,7 @@ def args():
 	args = parser.parse_args()
 
 def underConstruction():
-	print("Please use upper version of python!!!")
+	print("This feature works with Python3")
 
 def sendRequest(queryData):
 	product_list = '"product_list": ' + queryData
