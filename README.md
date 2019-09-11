@@ -27,3 +27,4 @@ Use below links to get detailed information about vulmap:
 ## Main Contributors
 * [Yavuz Atlas](https://github.com/yavuzatlas)
 * [Fatih Özel](https://github.com/ozelfatih)
+* [Hakan Bayır](https://github.com/HakanBayir)
