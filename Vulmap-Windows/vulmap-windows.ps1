@@ -109,6 +109,21 @@ https://vulmon.com
         [switch] $Help
     )
 
+	#ignores ssl-errors which is required for proxies:
+	add-type @"
+        using System.Net;
+        using System.Security.Cryptography.X509Certificates;
+        public class TrustAllCertsPolicy : ICertificatePolicy {
+            public bool CheckValidationResult(
+                ServicePoint srvPoint, X509Certificate certificate,
+                WebRequest request, int certificateProblem) {
+                return true;
+				}
+    }
+"@
+    [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+
+
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12;
     function Send-Request($ProductList) {
         $product_list = '"product_list": ' + $ProductList;
