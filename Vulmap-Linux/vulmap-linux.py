@@ -221,10 +221,32 @@ def ReadFromFile(InventoryOutFile):
 			outResults(queryData)
 	outResults(queryData)
 
+def getOSArch():
+	lines = open('/etc/os-release','r').read().split('\n')
+	for line in lines:
+		if "ID_LIKE" in line:
+			# Get the first entry from ID_LIKE in most cases it will be
+			# either "debian" or "rhel".
+			distros = line.lower().split("=")[1].replace('"','').split()
+			return distros[0]
+	# By default set it up to be debian.
+	return "debian"
+
 def getProductList():
 	global productList
-	dpkg = "dpkg-query -W -f='${Package} ${Version} ${Architecture}\n'"
-	action = subprocess.Popen(dpkg, shell = True, stdout = subprocess.PIPE)
+
+	# By default exit and fail the query.
+	command = "exit 1"
+
+	# Change the command based on the OS architecture.
+	osArch = getOSArch()
+	if osArch == "debian":
+		command = "dpkg-query -W -f='${Package} ${Version} ${Architecture}\n'"
+	elif osArch == "rhel":
+		command = "rpm -qa --queryformat '%{NAME} %{VERSION} %{ARCH}\n'"
+
+	# Execute the command for the corresponding distro.
+	action = subprocess.Popen(command, shell = True, stdout = subprocess.PIPE)
 	results = action.communicate()[0]
 	if pV == 2:
 		tempList = str(results).split('\n')
