@@ -77,7 +77,7 @@ def sendRequest(queryData):
 
 		else:
 			request = urllib2.Request(url, body, headers)
-			result = urllib2.urlopen(request, timeout=5)
+			result = urllib2.urlopen(request, timeout=240)
 			response = json.loads(result.read())
 	else:
 		if args.proxy:
