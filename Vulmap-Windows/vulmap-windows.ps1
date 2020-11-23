@@ -193,7 +193,7 @@ https://vulmon.com
     function Get-Vulmon($product_list) {
         $response = (Send-Request -ProductList $product_list | ConvertFrom-Json);
 		
-		$status_message = ($response | SELECT status_message);
+		$status_message = ($response | SELECT message);
 		$global:vulmon_api_status_message =  $status_message;
 
         $interests = @();
