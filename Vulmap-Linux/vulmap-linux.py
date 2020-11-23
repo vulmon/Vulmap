@@ -188,6 +188,8 @@ def outResults(q):
 						continue
 					print(bcolors.OKGREEN + '[+] ' + bcolors.ENDC + 'CVEID: ' + response['results'][i]['vulnerabilities'][j]['cveid'] + '	Score: ' + str(response['results'][i]['vulnerabilities'][j]['cvssv2_basescore']) + '	URL: ' + response['results'][i]['vulnerabilities'][j]['url'])
 				print("\n")
+	elif response['status'] == '1015':
+		print(response['message'])
 	else:
 		pass
 
