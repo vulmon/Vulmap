@@ -109,6 +109,8 @@ https://vulmon.com
         [switch] $Help
     )
 
+	$global:vulmon_api_status_message = "";
+	
 	#ignores ssl-errors which is required for proxies:
 	add-type @"
         using System.Net;
@@ -190,6 +192,10 @@ https://vulmon.com
     }
     function Get-Vulmon($product_list) {
         $response = (Send-Request -ProductList $product_list | ConvertFrom-Json);
+		
+		$status_message = ($response | SELECT status_message);
+		$global:vulmon_api_status_message =  $status_message;
+
         $interests = @();
         foreach ($vuln in $response.results) {
             
@@ -241,8 +247,9 @@ https://vulmon.com
         $vuln_list += $http_response;
         Write-Host "Checked $count items";
 
+
         if ($vuln_list.Length -eq 0) {
-            Write-Host 'No vulnerabilities found';
+            write-output $global:vulmon_api_status_message;
         } else {
             $vuln_count = $vuln_list.Length;
             Write-Host "$vuln_count vulnerabilities found!";
