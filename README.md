@@ -28,3 +28,7 @@ Use the below links to get detailed information about vulmap:
 * [Yavuz Atlas](https://github.com/yavuzatlas)
 * [Fatih Özel](https://github.com/ozelfatih)
 * [Hakan Bayır](https://github.com/HakanBayir)
+
+## Conferences
+* [DEF CON](https://www.defcon.org/html/defcon-27/dc-27-demolabs.html#Vulmap)
+* [Black Hat](https://www.blackhat.com/asia-20/arsenal/schedule/index.html#vulmap-online-local-vulnerability-scanners-project-19251)
