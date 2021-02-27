@@ -182,7 +182,7 @@ function Invoke-Vulmap {
     }
 
     function Get-JsonRequestBatches ($inventory) {
-        $numberOfBatches = [math]::Ceiling($inventory.count / 100)
+        $numberOfBatches = [math]::Ceiling(@($inventory).count / 100)
 
         for ($i = 0; $i -lt $numberOfBatches; $i++) {
             $productList = $inventory |
@@ -258,7 +258,7 @@ function Invoke-Vulmap {
             }
         }
 
-        Write-Host "Checked $($inventory.count) items"
+        Write-Host "Checked $(@($inventory).count) items"
 
         if ($null -like $vuln_list) {
             Write-Output $vulmon_api_status_message
@@ -294,6 +294,11 @@ function Invoke-Vulmap {
     }
     else {
         $inventory_json = Get-Inventory
+
+        if (! $inventory_json) {
+            Write-Warning 'No installed software detected.'
+            break
+        }
 
         if ($SaveInventoryFile -Or ($Mode -eq 'CollectInventory')) {
             Write-Host "Saving software inventory to $InventoryOutFile..."
