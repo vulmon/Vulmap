@@ -103,7 +103,7 @@ function Invoke-Vulmap {
 
         [switch] $OnlyExploitableVulns,
         [string] $DownloadExploit,
-        [switch] $DownloadAllExploits = $true,
+        [switch] $DownloadAllExploits,
         [switch] $SaveInventoryFile,
         [switch] $ReadInventoryFile,
         [string] $InventoryOutFile = 'inventory.json',
@@ -112,7 +112,6 @@ function Invoke-Vulmap {
     )
 
     $ErrorActionPreference = 'Stop'
-    $global:vulmon_api_status_message = ''
     $registry_paths = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall', 'HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
     $vulMapScannerUri = 'https://vulmon.com/scannerapi_vv211'
     $exploitDownloadUri = 'https://vulmon.com/downloadexploit?qid='
@@ -143,28 +142,7 @@ function Invoke-Vulmap {
 
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-    function Send-Request($ProductList) {
-        $product_list = '"product_list": ' + $ProductList
-
-        $json_request_data = '{'
-        $json_request_data = $json_request_data + '"os": "' + (Get-CimInstance Win32_OperatingSystem).Caption + '",'
-        $json_request_data = $json_request_data + $product_list
-        $json_request_data = $json_request_data + '}'
-
-        $webRequestSplat = @{
-            Uri    = $vulMapScannerUri
-            Method = 'POST'
-            Body   = @{querydata = $json_request_data }
-        }
-
-        if ($Proxy) {
-            $webRequestSplat.Proxy = $Proxy
-        }
-
-        return (Invoke-WebRequest @webRequestSplat).Content
-    }
-
-    function Get-ProductList() {
+    function Get-ProductList () {
         @(
             foreach ($registry_path in $registry_paths) {
                 $subkeys = Get-ChildItem -Path $registry_path -ErrorAction SilentlyContinue
@@ -203,18 +181,47 @@ function Invoke-Vulmap {
         $request | Out-File -Path ($request.Headers.'Content-Disposition' -split '=')[1].Substring(1)
     }
 
-    function Get-Vulmon($product_list) {
-        $response = (Send-Request -ProductList $product_list | ConvertFrom-Json)
+    function Get-JsonRequestBatches ($inventory) {
+        $numberOfBatches = [math]::Ceiling($inventory.count / 100)
 
-        $status_message = ($response | Select-Object message)
-        $global:vulmon_api_status_message = $status_message
+        for ($i = 0; $i -lt $numberOfBatches; $i++) {
+            $productList = $inventory |
+                Select-Object -First 100 |
+                ForEach-Object {
+                    [pscustomobject]@{
+                        product = $_.DisplayName
+                        version = if ($_.DisplayVersion) { $_.DisplayVersion } else { '' }
+                    }
+                }
 
-        $interests = $(
-            foreach ($vuln in $response.results) {
-                $tmp = $vuln |
+            $inventory = $inventory | Select-Object -Skip 100
+
+            $json_request_data = [ordered]@{
+                os           = (Get-CimInstance Win32_OperatingSystem).Caption
+                product_list = @($productList)
+            } | ConvertTo-Json
+
+            $webRequestSplat = @{
+                Uri    = $vulMapScannerUri
+                Method = 'POST'
+                Body   = @{ querydata = $json_request_data }
+            }
+
+            if ($Proxy) {
+                $webRequestSplat.Proxy = $Proxy
+            }
+
+            (Invoke-WebRequest @webRequestSplat).Content | ConvertFrom-Json
+        }
+    }
+
+    function Resolve-RequestResponses ($responses) {
+        foreach ($response in $responses) {
+            foreach ($vuln in ($response | Select-Object -ExpandProperty results -ErrorAction SilentlyContinue)) {
+                $interests = $vuln |
                     Select-Object -Property query_string -ExpandProperty vulnerabilities |
                     ForEach-Object {
-                        [pscustomobject]@{
+                        [PSCustomObject]@{
                             Product                = $_.query_string
                             'CVE ID'               = $_.cveid
                             'Risk Score'           = $_.cvssv2_basescore
@@ -225,59 +232,39 @@ function Invoke-Vulmap {
                     }
 
                 if ($OnlyExploitableVulns -Or $DownloadAllExploits) {
-                    $tmp = $tmp | Where-Object { $null -ne $_.exploits }
+                    $interests = $interests | Where-Object { $null -ne $_.exploits }
                 }
 
-                $tmp
-            }
-        )
-
-        if ($DownloadAllExploits) {
-            foreach ($exp in $interests) {
-                $exploit_id = $exp.ExploitID
-                Get-Exploit($exploit_id)
+                $interests
             }
         }
-
-        return $interests
     }
 
-    function Invoke-VulnerabilityScan() {
+    function Invoke-VulnerabilityScan ($inventory_json) {
         Write-Host 'Vulnerability scanning started...'
         $inventory = ConvertFrom-Json $inventory_json
 
-        $vuln_list = @()
-        $count = 0
-        foreach ($element in $inventory) {
-            # Build JSON from inventory
-            if ($element.DisplayName) {
-                $product_list = $product_list + '{'
-                $product_list = $product_list + '"product": "' + $element.DisplayName + '",'
-                $product_list = $product_list + '"version": "' + $element.DisplayVersion + '"'
-                $product_list = $product_list + '},'
-            }
 
-            $count++;
-            if (($count % 100) -eq 0) {
-                $product_list = $product_list.Substring(0, $product_list.Length - 1)
-                $http_param = '[' + $product_list + ']'
-                $http_response = Get-Vulmon $http_param 
-                $vuln_list += $http_response
-                $product_list = ''
+        $responses = Get-JsonRequestBatches $inventory
+
+        $vulmon_api_status_message = $responses[-1] | Select-Object message
+
+        $vuln_list = Resolve-RequestResponses $responses
+
+        if ($DownloadAllExploits) {
+            foreach ($exp in $vuln_list) {
+                $exploit_id = $exp.ExploitID
+                Get-Exploit $exploit_id
             }
         }
-        $product_list = $product_list.Substring(0, $product_list.Length - 1)
-        $http_param = '[' + $product_list + ']'
-        $http_response = Get-Vulmon $http_param
-        $vuln_list += $http_response
-        Write-Host "Checked $count items"
 
-        if ($vuln_list.Length -eq 0) {
-            Write-Output $global:vulmon_api_status_message
+        Write-Host "Checked $($inventory.count) items"
+
+        if ($null -like $vuln_list) {
+            Write-Output $vulmon_api_status_message
         }
         else {
-            $vuln_count = $vuln_list.Length
-            Write-Host "$vuln_count vulnerabilities found!"
+            Write-Host "$($vuln_list.Count) vulnerabilities found!"
             $vuln_list | Format-Table -AutoSize
         }
     }
@@ -314,7 +301,7 @@ function Invoke-Vulmap {
         }
 
         if ($Mode -eq 'Default') {
-            Invoke-VulnerabilityScan | Out-Default # Out-Default forces PowerShell to ouput this object before 'Done.', as intended.
+            Invoke-VulnerabilityScan $inventory_json | Out-Default # Out-Default forces PowerShell to ouput this object before 'Done.', as intended.
         }
     }
 
