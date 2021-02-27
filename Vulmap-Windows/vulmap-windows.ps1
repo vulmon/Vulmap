@@ -97,21 +97,28 @@ function Invoke-Vulmap {
     #>
 
     Param(
-        [string] $Mode = "Default",
+        [Parameter()]
+        [ValidateSet('Default', 'CollectInventory')]
+        [string] $Mode = 'Default',
+
         [switch] $OnlyExploitableVulns,
         [string] $DownloadExploit,
-        [switch] $DownloadAllExploits,
+        [switch] $DownloadAllExploits = $true,
         [switch] $SaveInventoryFile,
         [switch] $ReadInventoryFile,
-        [string] $InventoryOutFile = "inventory.json",
-        [string] $InventoryInFile = "inventory.json",
+        [string] $InventoryOutFile = 'inventory.json',
+        [string] $InventoryInFile = 'inventory.json',
         [string] $Proxy
     )
 
-	$global:vulmon_api_status_message = ""
-	
-	# Ignores ssl-errors which is required for proxies:
-	Add-Type @"
+    $ErrorActionPreference = 'Stop'
+    $global:vulmon_api_status_message = ''
+    $registry_paths = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall', 'HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
+    $vulMapScannerUri = 'https://vulmon.com/scannerapi_vv211'
+    $exploitDownloadUri = 'https://vulmon.com/downloadexploit?qid='
+    $userAgentString = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0'
+
+    $TrustAllCertsPolicyCode = @'
         using System.Net;
         using System.Security.Cryptography.X509Certificates;
         public class TrustAllCertsPolicy : ICertificatePolicy {
@@ -119,11 +126,20 @@ function Invoke-Vulmap {
                 ServicePoint srvPoint, X509Certificate certificate,
                 WebRequest request, int certificateProblem) {
                 return true;
-				}
-    }
-"@
+                }
+        }
+'@
 
-    [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+    if ($Proxy) {
+        if ($PSVersionTable.PSEdition -eq 'Core') {
+            Write-Error -Message 'Proxy support is not available for PowerShell Core, please use Windows PowerShell (powershell.exe) instead of PowerShell Core (pwsh.exe) if you need to use a proxy.'
+        }
+        else {
+            # Ignores ssl-errors which is required for proxies:
+            Add-Type -TypeDefinition $TrustAllCertsPolicyCode
+            [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+        }
+    }
 
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
@@ -135,94 +151,100 @@ function Invoke-Vulmap {
         $json_request_data = $json_request_data + $product_list
         $json_request_data = $json_request_data + '}'
 
-        $postParams = @{querydata = $json_request_data }
+        $webRequestSplat = @{
+            Uri    = $vulMapScannerUri
+            Method = 'POST'
+            Body   = @{querydata = $json_request_data }
+        }
 
-        if (![string]::IsNullOrEmpty($Proxy)) {
-            return (Invoke-WebRequest -Uri https://vulmon.com/scannerapi_vv211 -Method POST -Body $postParams -Proxy $Proxy).Content
+        if ($Proxy) {
+            $webRequestSplat.Proxy = $Proxy
         }
-        else {
-            return (Invoke-WebRequest -Uri https://vulmon.com/scannerapi_vv211 -Method POST -Body $postParams).Content
-        }
+
+        return (Invoke-WebRequest @webRequestSplat).Content
     }
 
     function Get-ProductList() {
-        $registry_paths = ("HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall")
+        @(
+            foreach ($registry_path in $registry_paths) {
+                $subkeys = Get-ChildItem -Path $registry_path -ErrorAction SilentlyContinue
 
-        $objectArray = @()
+                if ($subkeys) {
+                    ForEach ($key in $subkeys) {
+                        $DisplayName = $key.getValue('DisplayName')
 
-        foreach ($registry_path in $registry_paths) {
+                        if ($null -notlike $DisplayName) {
+                            $DisplayVersion = $key.GetValue('DisplayVersion')
 
-            if ([bool](Get-ChildItem -Path $registry_path -ErrorAction SilentlyContinue)) {
-
-                $subkeys = Get-ChildItem -Path $registry_path
-
-                ForEach ($key in $subkeys) {
-                    $DisplayName = $key.getValue('DisplayName')
-
-                    if (!([string]::IsNullOrEmpty($DisplayName))) {
-                        $DisplayVersion = $key.GetValue('DisplayVersion')
-
-                        $Object = [PSCustomObject]@{
-                            DisplayName     = $DisplayName.Trim()
-                            DisplayVersion  = $DisplayVersion
-                            NameVersionPair = $DisplayName.Trim() + $DisplayVersion
+                            [PSCustomObject]@{
+                                PSTypeName      = 'System.Software.Inventory'
+                                DisplayName     = $DisplayName.Trim()
+                                DisplayVersion  = $DisplayVersion
+                                NameVersionPair = $DisplayName.Trim() + $DisplayVersion
+                            }
                         }
-
-                        $Object.pstypenames.insert(0, 'System.Software.Inventory')
-
-                        $objectArray += $Object
                     }
                 }
             }
-        }
-
-        $objectArray | Sort-Object NameVersionPair -unique
+        ) | Sort-Object NameVersionPair -Unique
     }
 
     function Get-Exploit($ExploitID) {
-	    if (![string]::IsNullOrEmpty($Proxy))
-        {
-			$request1 = Invoke-WebRequest -Uri ('https://vulmon.com/downloadexploit?qid=' + $ExploitID) -Proxy $Proxy -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0"
-			Invoke-WebRequest -Uri ('https://vulmon.com/downloadexploit?qid=' + $ExploitID) -Proxy $Proxy -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0" -OutFile ( ($request1.Headers."Content-Disposition" -split "=")[1].substring(1))
-		}
-		else
-		{
-			$request1 = Invoke-WebRequest -Uri ('https://vulmon.com/downloadexploit?qid=' + $ExploitID) -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0"
-			Invoke-WebRequest -Uri ('https://vulmon.com/downloadexploit?qid=' + $ExploitID) -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:61.0) Gecko/20100101 Firefox/61.0" -OutFile ( ($request1.Headers."Content-Disposition" -split "=")[1].substring(1))
-		}
+        $webRequestSplat = @{
+            Uri       = $exploitDownloadUri + $ExploitID
+            UserAgent = $userAgentString
+        }
+
+        if ($Proxy) {
+            $webRequestSplat.Proxy = $Proxy
+        }
+
+        $request = Invoke-WebRequest @webRequestSplat
+        $request | Out-File -Path ($request.Headers.'Content-Disposition' -split '=')[1].Substring(1)
     }
 
     function Get-Vulmon($product_list) {
         $response = (Send-Request -ProductList $product_list | ConvertFrom-Json)
 
-		$status_message = ($response | Select-Object message)
-		$global:vulmon_api_status_message =  $status_message
+        $status_message = ($response | Select-Object message)
+        $global:vulmon_api_status_message = $status_message
 
-        $interests = @()
-        foreach ($vuln in $response.results) {
-
-            if ($OnlyExploitableVulns -Or $DownloadAllExploits) {
-                $interests += $vuln | Select-Object -Property query_string -ExpandProperty vulnerabilities | Where-Object { $_.exploits -ne $null } | `
-                    Select-Object -Property @{N = 'Product'; E = { $_.query_string } }, @{N = 'CVE ID'; E = { $_.cveid } }, @{N = 'Risk Score'; E = { $_.cvssv2_basescore } }, @{N = 'Vulnerability Detail'; E = { $_.url } }, @{L = 'ExploitID'; E = { if ($null -ne $_.exploits) { "EDB" + ($_.exploits[0].url).Split("{=}")[2] }else { null } } }, @{L = 'Exploit Title'; E = { if ($null -ne $_.exploits) { $_.exploits[0].title }else { null } } }
-
-                if ($DownloadAllExploits) {
-                    foreach ($exp in $interests) {
-                        $exploit_id = $exp.ExploitID
-                        Get-Exploit($exploit_id)
+        $interests = $(
+            foreach ($vuln in $response.results) {
+                $tmp = $vuln |
+                    Select-Object -Property query_string -ExpandProperty vulnerabilities |
+                    ForEach-Object {
+                        [pscustomobject]@{
+                            Product                = $_.query_string
+                            'CVE ID'               = $_.cveid
+                            'Risk Score'           = $_.cvssv2_basescore
+                            'Vulnerability Detail' = $_.url
+                            ExploitID              = if ($null -ne $_.exploits) { 'EDB' + ($_.exploits[0].url).Split('{=}')[2] } else { $null }
+                            'Exploit Title'        = if ($null -ne $_.exploits) { $_.exploits[0].title } else { $null }
+                        }
                     }
+
+                if ($OnlyExploitableVulns -Or $DownloadAllExploits) {
+                    $tmp = $tmp | Where-Object { $null -ne $_.exploits }
                 }
+
+                $tmp
             }
-            else {
-                $interests += $vuln | Select-Object -Property query_string -ExpandProperty vulnerabilities | `
-                    Select-Object -Property @{N = 'Product'; E = { $_.query_string } }, @{N = 'CVE ID'; E = { $_.cveid } }, @{N = 'Risk Score'; E = { $_.cvssv2_basescore } }, @{N = 'Vulnerability Detail'; E = { $_.url } }, @{L = 'Exploit ID'; E = { if ($null -ne $_.exploits) { "EDB" + ($_.exploits[0].url).Split("{=}")[2] }else { null } } }, @{L = 'Exploit Title'; E = { if ($null -ne $_.exploits) { $_.exploits[0].title }else { null } } }
+        )
+
+        if ($DownloadAllExploits) {
+            foreach ($exp in $interests) {
+                $exploit_id = $exp.ExploitID
+                Get-Exploit($exploit_id)
             }
         }
+
         return $interests
     }
 
     function Invoke-VulnerabilityScan() {
         Write-Host 'Vulnerability scanning started...'
-        $inventory = ConvertFrom-Json($inventory_json)
+        $inventory = ConvertFrom-Json $inventory_json
 
         $vuln_list = @()
         $count = 0
@@ -239,17 +261,16 @@ function Invoke-Vulmap {
             if (($count % 100) -eq 0) {
                 $product_list = $product_list.Substring(0, $product_list.Length - 1)
                 $http_param = '[' + $product_list + ']'
-                $http_response = Get-Vulmon($http_param)
+                $http_response = Get-Vulmon $http_param 
                 $vuln_list += $http_response
-                $product_list = ""
+                $product_list = ''
             }
         }
         $product_list = $product_list.Substring(0, $product_list.Length - 1)
         $http_param = '[' + $product_list + ']'
-        $http_response = Get-Vulmon($http_param)
+        $http_response = Get-Vulmon $http_param
         $vuln_list += $http_response
         Write-Host "Checked $count items"
-
 
         if ($vuln_list.Length -eq 0) {
             Write-Output $global:vulmon_api_status_message
@@ -261,41 +282,42 @@ function Invoke-Vulmap {
         }
     }
 
-    function Get-Inventory{
+    function Get-Inventory {
         if ($ReadInventoryFile) {
             # read from file
             Write-Host "Reading software inventory from $InventoryInFile..."
             $inventory_json = Get-Content -Encoding UTF8 -Path $InventoryInFile | Out-String
         }
         else {
-            Write-Host "Collecting software inventory..."
+            Write-Host 'Collecting software inventory...'
             $inventory = Get-ProductList
-            $inventory_json = ConvertTo-JSON $inventory
+            $inventory_json = ConvertTo-Json $inventory
         }
+
         Write-Host 'Software inventory collected'
         return $inventory_json
-
     }
 
     <#-----------------------------------------------------------[Execution]------------------------------------------------------------#>
     Write-Host 'Vulmap started...'
-    if (!([string]::IsNullOrEmpty($DownloadExploit))) {
-        "Downloading exploit..."
-        Get-Exploit($DownloadExploit)
+
+    if ($DownloadExploit) {
+        Write-Host 'Downloading exploit...'
+        Get-Exploit $DownloadExploit
     }
     else {
         $inventory_json = Get-Inventory
-        # Save Inventory to File
-        if (($SaveInventoryFile) -Or ($Mode -eq "CollectInventory")) {
+
+        if ($SaveInventoryFile -Or ($Mode -eq 'CollectInventory')) {
             Write-Host "Saving software inventory to $InventoryOutFile..."
             $inventory_json | Out-File -Encoding UTF8 -FilePath $InventoryOutFile
         }
 
-        if (!($Mode -eq "CollectInventory")) {
-           # Mode 'Default'
-           Invoke-VulnerabilityScan
+        if ($Mode -eq 'Default') {
+            Invoke-VulnerabilityScan | Out-Default # Out-Default forces PowerShell to ouput this object before 'Done.', as intended.
         }
     }
+
     Write-Host 'Done.'
 }
 
