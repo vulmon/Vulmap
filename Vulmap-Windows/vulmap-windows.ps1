@@ -1,4 +1,4 @@
-function Invoke-Vulmap {
+﻿function Invoke-Vulmap {
     <#
     .SYNOPSIS
     Online Local vulnerability Scanner
@@ -151,6 +151,7 @@ function Invoke-Vulmap {
         }
         else {
             # Ignores ssl-errors which is required for proxies:
+            Write-Verbose "Loading code to circumvent proxy ssl errors."
             Add-Type -TypeDefinition $TrustAllCertsPolicyCode
             [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
         }
@@ -159,6 +160,7 @@ function Invoke-Vulmap {
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
     function Get-ProductList () {
+        Write-Verbose "Reading installed software from registry."
         @(
             foreach ($registry_path in $registry_paths) {
                 $subkeys = Get-ChildItem -Path $registry_path -ErrorAction SilentlyContinue
@@ -183,7 +185,8 @@ function Invoke-Vulmap {
         ) | Sort-Object NameVersionPair -Unique
     }
 
-    function Get-Exploit($ExploitID) {
+    function Get-Exploit ($ExploitID) {
+        Write-Verbose "Downloading exploit '$ExploitID'."
         $webRequestSplat = @{
             Uri       = $exploitDownloadUri + $ExploitID
             UserAgent = $userAgentString
@@ -194,13 +197,16 @@ function Invoke-Vulmap {
         }
 
         $request = Invoke-WebRequest @webRequestSplat
-        $request | Out-File -Path ($request.Headers.'Content-Disposition' -split '=')[1].Substring(1)
+        $fileName = ($request.Headers.'Content-Disposition' -split '=')[1].Substring(1)
+        $request | Out-File -Path $fileName
+        Write-Verbose "Saved exploit '$ExploitID' to file '$fileName'."
     }
 
     function Get-JsonRequestBatches ($inventory) {
         $numberOfBatches = [math]::Ceiling(@($inventory).count / 100)
 
         for ($i = 0; $i -lt $numberOfBatches; $i++) {
+            Write-Verbose "Submitting software to vulmon.com api, batch '$i' of '$numberOfBatches'."
             $productList = $inventory |
                 Select-Object -First 100 |
                 ForEach-Object {
@@ -213,7 +219,7 @@ function Invoke-Vulmap {
             $inventory = $inventory | Select-Object -Skip 100
 
             $json_request_data = [ordered]@{
-                os           = (Get-CimInstance Win32_OperatingSystem).Caption
+                os           = (Get-CimInstance Win32_OperatingSystem -Verbose:$false).Caption
                 product_list = @($productList)
             } | ConvertTo-Json
 
@@ -232,8 +238,10 @@ function Invoke-Vulmap {
     }
 
     function Resolve-RequestResponses ($responses) {
+        $count=0
         foreach ($response in $responses) {
             foreach ($vuln in ($response | Select-Object -ExpandProperty results -ErrorAction SilentlyContinue)) {
+                Write-Verbose "Parsing results from vulmon.com api."
                 $interests = $vuln |
                     Select-Object -Property query_string -ExpandProperty vulnerabilities |
                     ForEach-Object {
@@ -251,6 +259,9 @@ function Invoke-Vulmap {
                     $interests = $interests | Where-Object { $null -ne $_.exploits }
                 }
 
+                $count += $interests.Count
+                Write-Verbose "Found '$count' vulnerabilities so far."
+
                 $interests
             }
         }
@@ -260,10 +271,9 @@ function Invoke-Vulmap {
         Write-Host 'Vulnerability scanning started...'
         $inventory = ConvertFrom-Json $inventory_json
 
-
         $responses = Get-JsonRequestBatches $inventory
 
-        $vulmon_api_status_message = $responses[-1] | Select-Object message
+        $vulmon_api_status_message = $responses[-1] | Select-Object -ExpandProperty message
 
         $vuln_list = Resolve-RequestResponses $responses
 
@@ -274,13 +284,13 @@ function Invoke-Vulmap {
             }
         }
 
-        Write-Host "Checked $(@($inventory).count) items"
+        Write-Host "Checked $(@($inventory).count) items" -ForegroundColor Green
 
         if ($null -like $vuln_list) {
-            Write-Output $vulmon_api_status_message
+            Write-Host "Vulmon.com Api returned message: $vulmon_api_status_message" -ForegroundColor DarkCyan
         }
         else {
-            Write-Host "$($vuln_list.Count) vulnerabilities found!"
+            Write-Host "$($vuln_list.Count) vulnerabilities found!" -ForegroundColor Red
             $vuln_list | Format-Table -AutoSize
         }
     }
