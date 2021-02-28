@@ -40,6 +40,11 @@
     Default mode. Conducts a vulnerability scanning.
 
     .EXAMPLE
+    PS> Invoke-Vulmap -Verbose
+
+    Default mode, with verbose messages. Conducts a vulnerability scanning and displays details about progress.
+
+    .EXAMPLE
     PS> Invoke-Vulmap -OnlyExploitableVulns
 
     Conducts a vulnerability scanning and only shows vulnerabilities that have exploits.
