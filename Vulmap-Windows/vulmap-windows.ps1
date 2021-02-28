@@ -197,8 +197,10 @@
         }
 
         $request = Invoke-WebRequest @webRequestSplat
+
         $fileName = ($request.Headers.'Content-Disposition' -split '=')[1].Substring(1)
-        $request | Out-File -Path $fileName
+        $null = New-Item -Path $fileName -ItemType File -Value $request -Force
+
         Write-Verbose "Saved exploit '$ExploitID' to file '$fileName'."
     }
 
