@@ -96,18 +96,34 @@ function Invoke-Vulmap {
     https://vulmon.com
     #>
 
+    [CmdletBinding()]
     Param(
-        [Parameter()]
+        [Parameter(HelpMessage='Mode "Default" performs a vulnerability scan. Mode "CollectInventory" collects software inventory but does not conduct a vulnerability scan. See also -InventoryOutFile parameter. Default: "Default".')]
         [ValidateSet('Default', 'CollectInventory')]
         [string] $Mode = 'Default',
 
+        [Parameter(HelpMessage='Conducts a vulnerability scan and only shows vulnerabilities that have exploits.')]
         [switch] $OnlyExploitableVulns,
+
+        [Parameter(HelpMessage='Downloads given exploit. Supply an ExploitID found by a scan.')]
         [string] $DownloadExploit,
+
+        [Parameter(HelpMessage='Scans the computer and downloads all available exploits.')]
         [switch] $DownloadAllExploits,
+
+        [Parameter(HelpMessage='Saves software inventory file. Enabled automatically when Mode is CollectInventory.')]
         [switch] $SaveInventoryFile,
+
+        [Parameter(HelpMessage='Uses software inventory file rather than scanning local computer.')]
         [switch] $ReadInventoryFile,
+
+        [Parameter(HelpMessage='File name to save collected inventory to. Default: "inventory.json"')]
         [string] $InventoryOutFile = 'inventory.json',
+
+        [Parameter(HelpMessage='File name to read inventory from. Default: "inventory.json"')]
         [string] $InventoryInFile = 'inventory.json',
+
+        [Parameter(HelpMessage='Specifies a proxy server. Enter the URI of a network proxy server.')]
         [string] $Proxy
     )
 
