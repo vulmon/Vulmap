@@ -158,7 +158,7 @@
                     ForEach ($key in $subkeys) {
                         $DisplayName = $key.getValue('DisplayName')
 
-                        if ($null -notlike $DisplayName) {
+                        if ($null -ne $DisplayName) {
                             $DisplayVersion = $key.GetValue('DisplayVersion')
 
                             [PSCustomObject]@{
